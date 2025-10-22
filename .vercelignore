@@ -1,0 +1,15 @@
+Dataset-Pineline/
+server/
+flaskServer/
+setup_pinecone.py
+test_apis.py
+upload_to_pinecone.py
+SETUP_*.md
+QUICK_START.md
+VERCEL_DEPLOYMENT.md
+.git/
+*.pyc
+__pycache__/
+node_modules/
+.env
+.DS_Store

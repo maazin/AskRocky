@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bull Bot</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon_package/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon_package/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon_package/favicon-16x16.png">
+    <link rel="manifest" href="assets/favicon_package/site.webmanifest">
+    <link rel="mask-icon" href="assets/favicon_package/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#f0f2f4">
+    <meta name="theme-color" content="#f0f2f4">
+  </head>
+  <body>
+    <div id="app">
+      <div class="header">
+        <div class="logo">
+          <img src="assets/usflogo.png" alt="logo" />
+        </div>  
+        <div class="title">Ask Bull Bot about University of South Florida</div>
+      </div>
+      <div id="chat_container"></div>
+      <form>
+        <textarea name="prompt" rows="1" cols="1" placeholder="Ask something..."></textarea>
+        <button type="submit"><img src="assets/send.svg" alt="send" />
+      </form>
+    </div>
+
+    <script type="module" src="script.js"></script>
+  </body>
+</html>
