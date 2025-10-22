@@ -36,3 +36,30 @@ Configure secrets via environment variables (do not hardcode keys in source code
 - PINECONE_INDEX (optional, default: `bullbot`)
 
 Client build expects `VITE_SERVER` at build time (see `client/.env.example`).
+
+## Deploy backend on Render (one-click)
+
+Option A: Use the Render Blueprint in `render.yaml`:
+
+1. Push this repo to GitHub (done).
+2. Go to Render → New → Blueprint → select this repo.
+3. Set secret env vars on the service:
+	- `OPENAI_API_KEY`
+	- `PINECONE_API`
+4. Deploy. Render will expose a URL like `https://askrocky-backend.onrender.com`.
+
+Option B: Manual web service
+1. New Web Service → Connect repo.
+2. Build: `pip install -r requirements.txt`
+3. Start: `python api/index.py`
+4. Add env vars as above; deploy.
+
+Then set Vercel `VITE_SERVER` to `https://<your-render-url>/api/chat` and redeploy the client.
+
+## Deploy backend on Railway
+
+1. Add this repo in Railway and create a service from it.
+2. Railway will detect the `Procfile` and run `web: python api/index.py`.
+3. Set env vars: `OPENAI_API_KEY`, `PINECONE_API`, `PINECONE_ENV`, `PINECONE_INDEX`.
+4. Deploy and copy the public URL.
+5. Update Vercel `VITE_SERVER` to `https://<your-railway-url>/api/chat` and redeploy the client.

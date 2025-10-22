@@ -11,6 +11,11 @@ node_modules
 dist
 dist-ssr
 *.local
+__pycache__/
+*.pyc
+
+# Dataset artifacts (not needed in repo)
+Dataset-Pineline/*.json
 
 # Editor directories and files
 .vscode/*
