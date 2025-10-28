@@ -6,7 +6,7 @@ Ask Rocky – a chatbot designed to comprehend natural language queries and resp
 - Database: Pinecone
 - Embedding Model: [BAAI/bge-small-en](https://huggingface.co/BAAI/bge-small-en)
 - Large Language Model: OpenAI API
-- Deployment: Vercel / Cyclic / AWS EC2
+- Deployment: Vercel / Cyclic
 
 ## Description
 - The client hosted on Vercel is a web app that allows users to ask questions and get answers from the server.
