@@ -1,5 +1,5 @@
-# Bull Bot
-Bull Bot – a chatbot designed to comprehend natural language queries and respond with precise answers, accompanied by the most relevant website links. Live at [BullBot.tech](https://www.bullbot.tech)
+# AskRocky
+Ask Rocky – a chatbot designed to comprehend natural language queries and respond with precise answers, accompanied by the most relevant website links. Live at https://askrocky.vercel.app
 
 ## Tech Stack
 - Vite.js / Node.js / Python / langchain / 
