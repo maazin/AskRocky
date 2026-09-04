@@ -1,8 +1,8 @@
-# Bull Bot - Setup Complete! 🎉
+# AskRocky - Setup Complete! 🎉
 
 ## ✅ What's Been Done
 
-I've configured your Bull Bot application with your API keys and set up all the necessary components:
+I've configured your AskRocky application with your API keys and set up all the necessary components:
 
 ### 1. **API Keys Configured**
    - ✅ Pinecone API key added to `flaskServer/config.py`
@@ -62,7 +62,7 @@ Your OpenAI API key has exceeded its quota. You have two options:
 Once Steps 1 & 2 are complete:
 
 ```bash
-cd /Users/maazinshaikh/Desktop/Mac/Programs/AskRocky/bullbot
+cd /path/to/askrocky
 python upload_to_pinecone.py
 ```
 
@@ -80,7 +80,7 @@ After completing all the above steps, start the application with these commands 
 
 ### Terminal 1: Flask Server (AI Backend)
 ```bash
-cd /Users/maazinshaikh/Desktop/Mac/Programs/AskRocky/bullbot/flaskServer
+cd /path/to/askrocky/flaskServer
 python app.py
 ```
 
@@ -91,7 +91,7 @@ Should display:
 
 ### Terminal 2: Express Server (API Middleware)
 ```bash
-cd /Users/maazinshaikh/Desktop/Mac/Programs/AskRocky/bullbot/server
+cd /path/to/askrocky/server
 npm start
 ```
 
@@ -102,7 +102,7 @@ Server is running on port 3000
 
 ### Terminal 3: Vite Client (Frontend)
 ```bash
-cd /Users/maazinshaikh/Desktop/Mac/Programs/AskRocky/bullbot/client
+cd /path/to/askrocky/client
 npm run dev
 ```
 
@@ -119,7 +119,7 @@ Open your browser and navigate to: **http://localhost:5173**
 ## 📁 Project Structure
 
 ```
-bullbot/
+askrocky/
 ├── client/                 # React + Vite frontend
 │   ├── .env               # ✅ Created - contains VITE_SERVER URL
 │   └── src/
@@ -241,4 +241,4 @@ If you encounter issues:
 - [ ] Start all 3 servers
 - [ ] Test the application!
 
-**Good luck with your Bull Bot! 🐂🤖**
+**Good luck with your AskRocky! 🐂🤖**

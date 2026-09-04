@@ -1,4 +1,4 @@
-# 🚀 Bull Bot - Quick Start (Updated for Vercel)
+# 🚀 AskRocky - Quick Start (Updated for Vercel)
 
 ## ✅ What's Configured
 
@@ -32,7 +32,7 @@ python upload_to_pinecone.py
 
 ### Terminal 1: Flask API
 ```bash
-cd /Users/maazinshaikh/Desktop/Mac/Programs/AskRocky/bullbot
+cd /path/to/askrocky
 python api/index.py
 ```
 
@@ -61,7 +61,7 @@ vercel env add PINECONE_API
 # Paste: pcsk_your_pinecone_key_here
 
 vercel env add OPENAI_API_KEY
-# Paste: sk-your-openai-key-here
+# Paste: your-openai-key
 
 # Select: Production, Preview, Development (all)
 ```
@@ -71,7 +71,7 @@ vercel env add OPENAI_API_KEY
 vercel
 ```
 
-That's it! You'll get a live URL like `https://bullbot.vercel.app`
+That's it! You'll get a live URL like `https://askrocky.vercel.app`
 
 ---
 

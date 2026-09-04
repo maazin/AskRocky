@@ -2,31 +2,118 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="assets/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Bull Bot</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>AskRocky — Questions about the University of South Florida</title>
+    <meta
+      name="description"
+      content="AskRocky is an independent AI assistant that answers questions about the University of South Florida and links to the usf.edu pages each answer came from. Not affiliated with USF."
+    />
     <link rel="stylesheet" href="style.css" />
-    <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon_package/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon_package/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon_package/favicon-16x16.png">
-    <link rel="manifest" href="assets/favicon_package/site.webmanifest">
-    <link rel="mask-icon" href="assets/favicon_package/safari-pinned-tab.svg" color="#5bbad5">
-    <meta name="msapplication-TileColor" content="#f0f2f4">
-    <meta name="theme-color" content="#f0f2f4">
+
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon_package/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon_package/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon_package/favicon-16x16.png" />
+    <link rel="manifest" href="assets/favicon_package/site.webmanifest" />
+    <link rel="mask-icon" href="assets/favicon_package/safari-pinned-tab.svg" color="#006747" />
+
+    <!-- Tint the browser chrome to match the header in each appearance. -->
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#006747" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#00251A" />
+    <meta name="msapplication-TileColor" content="#006747" />
+
+    <script>
+      // Apply the saved appearance before first paint so the page never flashes
+      // the wrong theme. Wrapped because storage throws in some privacy modes.
+      try {
+        var saved = localStorage.getItem('askrocky-theme');
+        if (saved === 'light' || saved === 'dark') {
+          document.documentElement.setAttribute('data-theme', saved);
+        }
+      } catch (e) {}
+    </script>
   </head>
+
   <body>
+    <a class="skip-link" href="#composer-input">Skip to the question box</a>
+
     <div id="app">
-      <div class="header">
-        <div class="logo">
-          <img src="assets/usflogo.png" alt="logo" />
-        </div>  
-        <div class="title">Ask Bull Bot about University of South Florida</div>
+      <header class="header">
+        <div class="header__bar">
+          <img class="header__logo" src="assets/usflogo.png" alt="" aria-hidden="true" />
+
+          <div class="header__titles">
+            <h1 class="header__title">
+              AskRocky
+              <span class="badge">Unofficial</span>
+            </h1>
+            <p class="header__subtitle">Questions about the University of South Florida</p>
+          </div>
+
+          <div class="header__actions">
+            <span class="status" id="status" hidden>
+              <span class="status__dot" aria-hidden="true"></span>
+              <span class="status__label" id="status-label"></span>
+            </span>
+
+            <button
+              type="button"
+              class="icon-button"
+              id="theme-toggle"
+              aria-label="Switch to dark appearance"
+              title="Switch appearance"
+            >
+              <svg class="icon icon--sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <circle cx="12" cy="12" r="4.2" />
+                <path d="M12 2.5v2.2M12 19.3v2.2M4.22 4.22l1.56 1.56M18.22 18.22l1.56 1.56M2.5 12h2.2M19.3 12h2.2M4.22 19.78l1.56-1.56M18.22 5.78l1.56-1.56" />
+              </svg>
+              <svg class="icon icon--moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M20.5 14.6A8.6 8.6 0 019.4 3.5a8.6 8.6 0 1011.1 11.1z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="header__rule" aria-hidden="true"></div>
+      </header>
+
+      <main class="main">
+        <div
+          id="chat_container"
+          class="chat-log"
+          role="log"
+          aria-live="polite"
+          aria-label="Conversation with AskRocky"
+        ></div>
+      </main>
+
+      <div class="composer-region">
+        <form class="composer" id="composer" autocomplete="off">
+          <label class="sr-only" for="composer-input">Your question for AskRocky</label>
+          <textarea
+            class="composer__input"
+            id="composer-input"
+            name="prompt"
+            rows="1"
+            placeholder="Ask about admissions, majors, campuses…"
+            enterkeyhint="send"
+          ></textarea>
+          <button class="composer__send" id="composer-send" type="submit" aria-label="Send question">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"
+              />
+            </svg>
+          </button>
+        </form>
+
+        <p class="disclosure">
+          Independent student project, not affiliated with USF. Answers are AI-generated and can be
+          wrong — check the linked <span class="disclosure__nowrap">usf.edu</span> pages before you
+          rely on them.
+        </p>
       </div>
-      <div id="chat_container"></div>
-      <form>
-        <textarea name="prompt" rows="1" cols="1" placeholder="Ask something..."></textarea>
-        <button type="submit"><img src="assets/send.svg" alt="send" />
-      </form>
     </div>
 
     <script type="module" src="script.js"></script>

@@ -1,1 +1,1 @@
-web: python api/index.py
+web: gunicorn api.index:app --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 180

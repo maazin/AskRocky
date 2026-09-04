@@ -1,7 +1,7 @@
 import requests
 import json
 
-print("Testing Bull Bot API...")
+print("Testing AskRocky API...")
 print()
 
 url = "http://localhost:8000/api/chat"

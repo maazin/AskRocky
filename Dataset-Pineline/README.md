@@ -1,7 +1,7 @@
-# BullBot-Dataset
-The repository contains dataset of Bull Bot from 5000+ websites and links of the University of South Florida
+# AskRocky-Dataset
+The repository contains dataset of AskRocky from 5000+ websites and links of the University of South Florida
 
-### Checkout Bull Bot in action at **[BullBot.tech](https://www.bullbot.tech)**
+### Checkout AskRocky in action at **[askrocky.vercel.app](https://askrocky.vercel.app)**
 
 ## About the main files in the repository: main.ipynb and data_webScrap.ipynb
 1. The program in [scrapLink.ipynb](scrapLink.ipynb) file scrapes the links from the websites stored them in the form of a pickle file [urls.pkl](urls.pkl).

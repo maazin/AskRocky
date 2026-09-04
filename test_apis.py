@@ -1,20 +1,22 @@
 #!/usr/bin/env python3
 """
-Simple test to check if we can connect to Pinecone and OpenAI
+Simple test to check if we can connect to Pinecone and OpenAI without hardcoding secrets.
 """
+
+import os
 
 print("Testing Pinecone and OpenAI connections...")
 
 # Test OpenAI
 print("\n1. Testing OpenAI API...")
 try:
-    import os
     import openai
-    openai.api_key = os.getenv("OPENAI_API_KEY", "")
-    if not openai.api_key:
-        raise RuntimeError("OPENAI_API_KEY is not set in environment")
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise RuntimeError("OPENAI_API_KEY not set in environment")
+    openai.api_key = api_key
 
-    # Test with a simple completion (legacy openai lib)
+    # Test with a simple completion
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[{"role": "user", "content": "Say hello"}],
@@ -30,13 +32,7 @@ print("\n2. Checking Pinecone library...")
 try:
     import pinecone
     print("✅ Pinecone library imported successfully")
-    print(f"   Note: Your API key starts with 'pcsk_' which is a serverless key")
-    print(f"   You'll need to create an index manually in the Pinecone console:")
-    print(f"   - Go to https://app.pinecone.io/")
-    print(f"   - Create a serverless index named 'bullbot'")
-    print(f"   - Use dimension: 384")
-    print(f"   - Use metric: cosine")
-    print(f"   - Use cloud: AWS, region: us-east-1")
+    print("   If you plan to use RAG, ensure PINECONE_API_KEY, PINECONE_ENVIRONMENT, and PINECONE_INDEX are set.")
 except Exception as e:
     print(f"❌ Pinecone error: {e}")
 

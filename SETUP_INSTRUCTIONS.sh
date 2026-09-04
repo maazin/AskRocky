@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🤖 Bull Bot Setup Summary"
+echo "🤖 AskRocky Setup Summary"
 echo "========================="
 echo ""
 echo "✅ Configuration Complete:"

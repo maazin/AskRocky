@@ -4,6 +4,10 @@ import cors from 'cors'
 import axios from 'axios'
 dotenv.config()
 
+// Configurable so this works in deployment, not just against a local Flask on 8000.
+const PORT = process.env.PORT || 3000
+const FLASK_API_URL = process.env.FLASK_API_URL || 'http://localhost:8000/api/chat'
+
 const app = express()
 app.use(cors())
 app.use(express.json())
@@ -18,13 +22,12 @@ app.post('/', async (req, res) => {
   try {
     const prompt = req.body.prompt;
 
-    const response = await axios.post('http://localhost:8000/prediction', {
-      input: prompt,
+    // Proxy to Python API (api/index.py) unified chat endpoint
+    const response = await axios.post(FLASK_API_URL, {
+      prompt,
     });
 
-    res.status(200).send({
-      bot: response.data
-    });
+    res.status(200).send(response.data);
 
   } catch (error) {
     console.error(error)
@@ -32,4 +35,4 @@ app.post('/', async (req, res) => {
   }
 })
 
-app.listen(3000, () => console.log('AI server started on http://localhost:3000'))
+app.listen(PORT, () => console.log(`AI server started on http://localhost:${PORT}`))

@@ -22,6 +22,7 @@ def main():
     
     # Initialize Pinecone with the new serverless API
     print("📡 Connecting to Pinecone...")
+    print(f"   Using API key: {Config.PINECONE_API[:20]}...")
     print(f"   Index name: {Config.PINECONE_INDEX}")
     
     try:

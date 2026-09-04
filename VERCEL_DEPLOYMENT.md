@@ -1,13 +1,6 @@
-# 🚀 Deploy Bull Bot to Vercel
+# 🚀 Deploy AskRocky to Vercel (Frontend-only)
 
-## Why Vercel Only?
-
-Instead of the complex AWS + Cyclic + Vercel setup, we can deploy **everything** to Vercel:
-- ✅ Frontend (Vite/React) → Vercel Static
-- ✅ Backend (Flask API) → Vercel Serverless Functions
-- ✅ No need for Express server
-- ✅ No need for AWS EC2
-- ✅ 100% free for MVP/development
+This project deploys the frontend to Vercel as a static site. The Flask backend runs outside of Vercel (Render/Railway/your server or a temporary tunnel), and the client calls it via the `VITE_SERVER` URL.
 
 ---
 
@@ -43,7 +36,7 @@ Before deploying, test locally with the new simplified architecture:
 ### Start the Flask API (No Express needed!)
 
 ```bash
-cd /Users/maazinshaikh/Desktop/Mac/Programs/AskRocky/bullbot
+cd /path/to/askrocky
 python api/index.py
 ```
 
@@ -64,37 +57,28 @@ Open http://localhost:5173 and ask "What is USF?"
 
 ---
 
-## Deploy to Vercel
+## Deploy the Frontend to Vercel
 
 ### Step 1: Login to Vercel
 
 ```bash
-cd /Users/maazinshaikh/Desktop/Mac/Programs/AskRocky/bullbot
+cd /path/to/askrocky
 vercel login
 ```
 
-### Step 2: Set Environment Variables
+### Step 2: Provide the backend URL to the frontend
 
-You need to add your API keys as environment secrets in Vercel:
+Set an environment variable named `VITE_SERVER` in your Vercel Project (Settings → Environment Variables) to your backend URL, e.g.:
 
-```bash
-# Add Pinecone API key
-vercel env add PINECONE_API
-
-# When prompted, paste your key (example placeholder):
-# pcsk_your_pinecone_key_here
-
-# Add OpenAI API key
-vercel env add OPENAI_API_KEY
-
-# When prompted, paste your key (example placeholder):
-# sk-your-openai-key-here
+```
+VITE_SERVER=https://your-backend.example.com/api/chat
 ```
 
-For each variable, when asked which environments:
-- Select: **Production, Preview, and Development** (press Space to select all, Enter to confirm)
+Notes:
+- `client/.env.production` is intentionally blank; Vercel injects `VITE_SERVER` at build time.
+- For local dev you already have `client/.env` → `VITE_SERVER=http://localhost:8000/api/chat`.
 
-### Step 3: Deploy!
+### Step 3: Deploy
 
 ```bash
 vercel
@@ -104,14 +88,11 @@ Follow the prompts:
 - **Set up and deploy?** → Yes
 - **Which scope?** → Your account
 - **Link to existing project?** → No
-- **Project name?** → bullbot (or your choice)
+- **Project name?** → askrocky (or your choice)
 - **Directory with code?** → ./ (current directory)
 - **Override settings?** → No
 
-Vercel will:
-1. Build your frontend
-2. Deploy your Flask backend as serverless functions
-3. Give you a live URL (e.g., `https://bullbot.vercel.app`)
+Vercel will build the frontend and give you a live URL (e.g., `https://askrocky.vercel.app`).
 
 ### Step 4: Verify Deployment
 
@@ -126,16 +107,16 @@ Once deployed, Vercel will give you a URL. Test it:
 
 ---
 
-## Environment Variables Configuration
+## Backend deployment (Render/Railway)
 
-The following environment variables are read from `flaskServer/config.py`:
+Host the Flask API on a platform designed for Python services, then point `VITE_SERVER` at it.
 
-- `PINECONE_API` - Your Pinecone API key
-- `PINECONE_ENV` - Set to `us-east-1` (in config.py)
-- `PINECONE_INDEX` - Set to `bullbot` (in config.py)
-- `OPENAI_API_KEY` - Your OpenAI API key
+Minimal requirements:
+- Python 3.11
+- Start command: `python api/index.py`
+- Env vars: `OPENAI_API_KEY`, `PINECONE_API_KEY`, `PINECONE_ENVIRONMENT`, `PINECONE_INDEX`
 
-You only need to set `PINECONE_API` and `OPENAI_API_KEY` in Vercel, the others are hardcoded in config.py.
+Once deployed, copy the public URL (e.g., `https://your-backend.onrender.com/api/chat`) into the Vercel `VITE_SERVER` variable and redeploy the frontend.
 
 ---
 
@@ -158,14 +139,9 @@ You only need to set `PINECONE_API` and `OPENAI_API_KEY` in Vercel, the others a
 1. Add credits to your OpenAI account
 2. Update the API key in Vercel environment variables
 
-### Issue: Cold start is slow
+### Issue: Backend timeouts / cold starts on Vercel
 
-**Solution:** This is normal for Vercel serverless functions. First request may take 10-30 seconds as it:
-- Loads the embedding model
-- Connects to Pinecone
-- Initializes OpenAI
-
-Subsequent requests will be much faster (1-3 seconds).
+The Flask backend is not deployed on Vercel in this setup to avoid serverless limitations (package size, startup time). Use a dedicated Python host.
 
 ### Issue: Function timeout
 
@@ -175,32 +151,22 @@ Subsequent requests will be much faster (1-3 seconds).
 
 ---
 
-## What Changed From Original Architecture?
+## Architecture
 
-### Old (3-server setup):
 ```
-Client (Vercel) → Express Server (Cyclic) → Flask Server (AWS EC2)
-```
-
-### New (Vercel-only):
-```
-Client (Vercel Static) → Flask API (Vercel Serverless)
+Client (Vercel Static) → Flask API (Render/Railway/Your server)
 ```
 
-### Benefits:
-- ✅ Simpler deployment
-- ✅ No server management
-- ✅ Free hosting
-- ✅ Automatic HTTPS
-- ✅ Global CDN
-- ✅ Auto-scaling
+Benefits:
+- ✅ Simple, reliable frontend hosting
+- ✅ Flexible backend hosting without serverless limits
 
 ---
 
 ## Project Structure for Vercel
 
 ```
-bullbot/
+askrocky/
 ├── api/
 │   └── index.py              # Flask API (Vercel serverless function)
 ├── client/
@@ -276,7 +242,7 @@ Or go to: https://vercel.com/dashboard
 
 ## Quick Reference
 
-### Deploy Updates
+### Deploy Updates (frontend)
 ```bash
 vercel --prod
 ```
@@ -291,9 +257,9 @@ vercel rollback
 vercel ls
 ```
 
-### Remove Project
+### Remove Project (frontend)
 ```bash
-vercel remove bullbot
+vercel remove askrocky
 ```
 
 ---

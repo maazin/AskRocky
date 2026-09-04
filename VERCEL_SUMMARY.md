@@ -1,4 +1,4 @@
-# 🎉 Bull Bot - Vercel-Only Deployment (Simplified)
+# 🎉 AskRocky - Vercel-Only Deployment (Simplified)
 
 ## What I Changed for You
 
@@ -62,7 +62,7 @@ Instead of the complex 3-server setup (AWS + Cyclic + Vercel), I've restructured
 
 **Terminal 1 - API:**
 ```bash
-cd /Users/maazinshaikh/Desktop/Mac/Programs/AskRocky/bullbot
+cd /path/to/askrocky
 python api/index.py
 ```
 
@@ -164,7 +164,7 @@ The api/index.py includes CORS support. If you still see errors, check browser c
 ## 📁 Final Project Structure
 
 ```
-bullbot/
+askrocky/
 ├── api/
 │   └── index.py                    # ✅ NEW: Flask API (Vercel serverless)
 ├── client/

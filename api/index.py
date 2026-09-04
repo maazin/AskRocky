@@ -14,26 +14,60 @@ from config import Config
 from langchain.embeddings import HuggingFaceBgeEmbeddings
 from langchain.vectorstores import Pinecone as LangchainPinecone
 from langchain.prompts import PromptTemplate
-from langchain.chains import RetrievalQA
-from langchain.chat_models.openai import ChatOpenAI
-from pinecone import Pinecone
+# Compatible import for langchain==0.0.291
+from langchain.chat_models import ChatOpenAI
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for Vercel deployment
 app.config.from_object(Config)
 
-# Set environment variables for Langchain
-os.environ["OPENAI_API_KEY"] = app.config['OPENAI_API_KEY']
-os.environ["PINECONE_API_KEY"] = app.config['PINECONE_API']
-os.environ["PINECONE_ENVIRONMENT"] = app.config['PINECONE_ENV']
+# Debug: confirm config values are loaded (do not print secrets; only lengths)
+try:
+    pine_api_val = app.config.get('PINECONE_API')
+    openai_val = app.config.get('OPENAI_API_KEY')
+    print(f"[DEBUG] Config PINECONE_API present: {pine_api_val is not None}, length: {len(pine_api_val) if pine_api_val else 0}")
+    print(f"[DEBUG] Config OPENAI_API_KEY present: {openai_val is not None}, length: {len(openai_val) if openai_val else 0}")
+except Exception:
+    print("[DEBUG] Unable to read config values")
+
+# Set environment variables for Langchain and Pinecone (only if provided)
+cfg_openai = app.config.get('OPENAI_API_KEY')
+cfg_pine_api = app.config.get('PINECONE_API')
+cfg_pine_env = app.config.get('PINECONE_ENV')
+
+if cfg_openai:
+    os.environ["OPENAI_API_KEY"] = cfg_openai
+else:
+    # If not in config, try to pull into config from environment
+    env_openai = os.getenv("OPENAI_API_KEY")
+    if env_openai:
+        app.config['OPENAI_API_KEY'] = env_openai
+
+if cfg_pine_api:
+    os.environ["PINECONE_API_KEY"] = cfg_pine_api
+else:
+    env_pine = os.getenv("PINECONE_API_KEY") or os.getenv("PINECONE_API")
+    if env_pine:
+        app.config['PINECONE_API'] = env_pine
+        os.environ["PINECONE_API_KEY"] = env_pine
+
+if cfg_pine_env:
+    os.environ["PINECONE_ENVIRONMENT"] = cfg_pine_env
+else:
+    env_penv = os.getenv("PINECONE_ENVIRONMENT") or os.getenv("PINECONE_ENV")
+    if env_penv:
+        app.config['PINECONE_ENV'] = env_penv
+        os.environ["PINECONE_ENVIRONMENT"] = env_penv
 
 EMBEDDINGS_MODEL = None
 PINE_CONE = None
 READY = False
+EXPECTED_EMBED_DIM = 384
+EXPECTED_METRIC = "cosine"
 
 @app.route('/')
 def home():
-    return jsonify({'message': 'Bull Bot API is running'}), 200
+    return jsonify({'message': 'AskRocky API is running'}), 200
 
 @app.route('/health', methods=['GET'])
 def health():
@@ -85,7 +119,8 @@ def chat():
         llm_model = llm_LOAD('gpt-3.5-turbo-16k', 500, 0.5)
         print("[API] LLM loaded successfully")
 
-        result = retrieve(prompt, docsearch, llm_model)
+        # Use direct similarity search to avoid retriever API incompatibilities
+        result = retrieve_simple(prompt, docsearch, llm_model)
         print("[API] Retrieved result from LLM")
 
         answer = result['result']
@@ -139,23 +174,67 @@ def pineconeInitialization(embeddings):
         print("[INIT] Initializing Pinecone vector store...")
         try:
             from langchain_pinecone import PineconeVectorStore
-            from pinecone import Pinecone as PineconeClient
-            
-            index_name = app.config['PINECONE_INDEX']
+
+            index_name = os.getenv('PINECONE_INDEX') or app.config['PINECONE_INDEX']
             print(f"[INIT] Connecting to Pinecone index: {index_name}")
-            
-            # Initialize Pinecone client and get the index
-            pc = PineconeClient(api_key=app.config['PINECONE_API'])
-            pinecone_index = pc.Index(index_name)
-            
-            # Use the new langchain-pinecone package
+
+            # Ensure environment variables are set for the pinecone package
+            # to pick up; set both PINECONE_API_KEY and fallback names.
+            pine_api = app.config.get('PINECONE_API') or os.getenv('PINECONE_API_KEY') or os.getenv('PINECONE_API')
+            pine_env = app.config.get('PINECONE_ENV') or os.getenv('PINECONE_ENVIRONMENT') or os.getenv('PINECONE_ENV')
+            pine_host = app.config.get('PINECONE_HOST') or os.getenv('PINECONE_HOST')
+            if pine_api:
+                os.environ['PINECONE_API_KEY'] = pine_api
+                os.environ['PINECONE_API'] = pine_api
+                # Only log key length to avoid leaking secrets
+                print(f"[INIT] Pinecone API key length: {len(pine_api)}")
+            if pine_env:
+                os.environ['PINECONE_ENVIRONMENT'] = pine_env
+                os.environ['PINECONE_ENV'] = pine_env
+
+            # Import Pinecone client now that env vars are set
+            from pinecone import Pinecone as PineconeClient
+
+            # Create a Pinecone client instance; some pinecone versions also
+            # accept the api_key keyword, but env var ensures compatibility.
+            if not pine_api:
+                raise RuntimeError("Pinecone API key is missing. Set PINECONE_API_KEY in environment or flaskServer/config.py.")
+            pc = PineconeClient(api_key=pine_api)
+
+            # Validate index schema if possible (dimension, metric)
+            try:
+                desc = pc.describe_index(index_name)
+                dim = desc.get('dimension') or desc.get('spec', {}).get('dimension')
+                metric = desc.get('metric') or desc.get('spec', {}).get('metric')
+                if dim and dim != EXPECTED_EMBED_DIM:
+                    raise RuntimeError(
+                        f"Pinecone index '{index_name}' has dimension {dim}, expected {EXPECTED_EMBED_DIM} for BAAI/bge-small-en-v1.5. "
+                        "Please recreate or reconfigure the index."
+                    )
+                if metric and metric.lower() != EXPECTED_METRIC:
+                    raise RuntimeError(
+                        f"Pinecone index '{index_name}' metric is '{metric}', expected '{EXPECTED_METRIC}'. "
+                        "Please recreate or reconfigure the index (cosine recommended)."
+                    )
+                print(f"[INIT] ✅ Index schema OK (dim={dim}, metric={metric})")
+            except Exception as e:
+                # If describe is not available or different client version, log and continue
+                print(f"[INIT] (Info) Could not validate index schema automatically: {e}")
+
+            if pine_host:
+                print(f"[INIT] Using explicit Pinecone host: {pine_host}")
+                pinecone_index = pc.Index(index_name, host=pine_host)
+            else:
+                pinecone_index = pc.Index(index_name)
+
+            # Wrap the index with langchain-pinecone
             PINE_CONE = PineconeVectorStore(
                 index=pinecone_index,
                 embedding=embeddings,
                 text_key="text"
             )
             print("[INIT] ✅ Pinecone vector store initialized successfully")
-            
+
         except Exception as e:
             print(f"[INIT] ❌ ERROR initializing Pinecone: {e}")
             import traceback
@@ -174,48 +253,76 @@ def llm_LOAD(model, max_tokens, temp):
     )
     return llm
 
-def retrieve(query, docsearch, llm):
-    """Retrieve and generate answer"""
+def retrieve_simple(query, vector_store, llm, k: int = 4):
+    """Retrieve top-k docs via similarity_search and generate answer with a stuffed prompt.
+    Returns a dict compatible with previous result shape: { 'result': str, 'source_documents': [Document, ...] }
+    """
+    # Fetch relevant documents
+    try:
+        docs = vector_store.similarity_search(query, k=k)
+    except Exception as e:
+        # As a fallback if the method name differs, try max_marginal_relevance_search
+        try:
+            docs = vector_store.max_marginal_relevance_search(query, k=k)
+        except Exception:
+            raise e
+
+    # Build context
+    context = "\n\n".join([d.page_content for d in docs])
+
+    # Compose prompt
     prompt_template = app.config['PROMPT_TEMPLATE'] + """
-    
-    Context: {context}
-    
-    Question: {question}
-    Helpful Answer:"""
-    
+
+Context:
+{context}
+
+Question: {question}
+Helpful Answer:"""
+
     PROMPT = PromptTemplate(
         template=prompt_template,
-        input_variables=["context", "question"]
+        input_variables=["context", "question"],
     )
-    
-    chain_type_kwargs = {"prompt": PROMPT}
-    
-    qa = RetrievalQA.from_chain_type(
-        llm=llm,
-        chain_type="stuff",
-        retriever=docsearch.as_retriever(),
-        chain_type_kwargs=chain_type_kwargs,
-        return_source_documents=True
-    )
-    
-    result = qa({"query": query})
-    return result
 
-# For Vercel serverless
-if __name__ == '__main__':
-    # Preload heavy resources in a background thread so first requests don't block
-    def _warmup():
-        global READY
-        try:
-            print("[BOOT] Preloading embeddings and Pinecone...")
-            emb = embeddings()
-            pineconeInitialization(emb)
-            READY = True
-            print("[BOOT] Preload complete. System READY.")
-        except Exception as e:
-            print(f"[BOOT] Preload failed: {e}")
+    final_prompt = PROMPT.format(context=context, question=query)
+    answer = llm.predict(final_prompt)
 
+    return {"result": answer, "source_documents": docs}
+
+def _warmup():
+    """Load the embedding model and connect to Pinecone."""
+    global READY
+    try:
+        print("[BOOT] Preloading embeddings and Pinecone...")
+        emb = embeddings()
+        pineconeInitialization(emb)
+        READY = True
+        print("[BOOT] Preload complete. System READY.")
+    except Exception as e:
+        print(f"[BOOT] Preload failed: {e}")
+
+_WARMUP_STARTED = False
+
+def start_warmup():
+    """Kick off the preload in a background thread so first requests don't block.
+
+    This runs on import, not just under __main__, so WSGI servers (gunicorn on
+    Render/Heroku/Railway) warm up too. Without it those deployments would never
+    build the vector store and would serve the non-RAG fallback on every request.
+    """
+    global _WARMUP_STARTED
+    if _WARMUP_STARTED:
+        return
+    _WARMUP_STARTED = True
     threading.Thread(target=_warmup, daemon=True).start()
+
+# Skip the preload under the Flask reloader's parent process, which would
+# otherwise load the model twice.
+if os.getenv("ASKROCKY_SKIP_WARMUP") != "1":
+    start_warmup()
+
+if __name__ == '__main__':
     # Run Flask without the reloader to simplify logging and stability
-    port = int(os.getenv('PORT', '8000'))
-    app.run(host='0.0.0.0', port=port, debug=True, use_reloader=False)
+    port = int(os.getenv("PORT", 8000))
+    debug = os.getenv("FLASK_DEBUG", "0") == "1"
+    app.run(host='0.0.0.0', port=port, debug=debug, use_reloader=False)

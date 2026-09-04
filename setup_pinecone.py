@@ -4,27 +4,26 @@ Setup script to create Pinecone index and upload data
 """
 
 import json
-import sys
 import os
+import sys
 import pinecone
 from sentence_transformers import SentenceTransformer
 import time
 
-# Configuration (read from environment)
-PINECONE_API_KEY = os.getenv("PINECONE_API", "")
-PINECONE_ENV = os.getenv("PINECONE_ENV", "us-east-1")
-INDEX_NAME = os.getenv("PINECONE_INDEX", "bullbot")
+# Configuration -- read from the environment; never hardcode keys here.
+PINECONE_API_KEY = os.getenv("PINECONE_API_KEY") or os.getenv("PINECONE_API")
+PINECONE_ENV = os.getenv("PINECONE_ENVIRONMENT", "us-east-1")
+INDEX_NAME = "bullbot"
 DIMENSION = 384  # BGE-small-en-v1.5 produces 384-dimensional embeddings
 
 def main():
     print("🚀 Starting Pinecone setup...")
+
+    if not PINECONE_API_KEY:
+        sys.exit("PINECONE_API_KEY is not set. Export it, or put it in .env, before running this.")
     
     # Initialize Pinecone
     print("📡 Connecting to Pinecone...")
-    if not PINECONE_API_KEY:
-        print("❌ Error: PINECONE_API is not set in the environment.")
-        print("   Please set PINECONE_API (and optionally PINECONE_ENV, PINECONE_INDEX) before running.")
-        sys.exit(1)
     pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_ENV)
     
     # Check if index exists
@@ -61,7 +60,7 @@ def main():
     
     # Load the cleaned data
     print("📂 Loading cleaned data...")
-    data_path = "/Users/maazinshaikh/Desktop/Mac/Programs/AskRocky/bullbot/Dataset-Pineline/cleaned_data.json"
+    data_path = "/path/to/askrocky/Dataset-Pineline/cleaned_data.json"
     
     try:
         with open(data_path, 'r', encoding='utf-8') as f:

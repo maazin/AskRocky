@@ -11,11 +11,6 @@ node_modules
 dist
 dist-ssr
 *.local
-__pycache__/
-*.pyc
-
-# Dataset artifacts (not needed in repo)
-Dataset-Pineline/*.json
 
 # Editor directories and files
 .vscode/*
@@ -30,5 +25,15 @@ Dataset-Pineline/*.json
 
 # env
 .env
-.env.*
 .vercel
+
+# Python
+.venv
+.venv311
+venv/
+__pycache__/
+*.py[cod]
+
+# Generated dataset artifacts (rebuild with the Dataset-Pineline notebooks)
+Dataset-Pineline/data.json
+Dataset-Pineline/cleaned_data.json

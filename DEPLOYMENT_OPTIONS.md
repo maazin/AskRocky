@@ -1,4 +1,4 @@
-# Deployment Options for Bull Bot
+# Deployment Options for AskRocky
 
 ## Current Status ✅
 - ✅ Pinecone index created with 3,575 documents
@@ -42,7 +42,7 @@ npm install -g @railway/cli
 railway login
 
 # Deploy
-cd /Users/maazinshaikh/Desktop/Mac/Programs/AskRocky/bullbot
+cd /path/to/askrocky
 railway up
 ```
 
@@ -99,7 +99,7 @@ This gives you:
 ### Quick Railway Deploy:
 
 ```bash
-cd /Users/maazinshaikh/Desktop/Mac/Programs/AskRocky/bullbot
+cd /path/to/askrocky
 
 # Install Railway CLI
 curl -fsSL https://railway.app/install.sh | sh
@@ -112,7 +112,7 @@ railway init
 
 # Set environment variables
 railway variables set PINECONE_API=pcsk_your_pinecone_key_here
-railway variables set OPENAI_API_KEY=sk-your-openai-key-here
+railway variables set OPENAI_API_KEY=your-key-here
 
 # Deploy
 railway up
