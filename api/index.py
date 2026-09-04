@@ -3,7 +3,6 @@ from flask_cors import CORS
 import os
 import sys
 import time
-import threading
 
 # stdout is fully block-buffered when it isn't a tty (true under gunicorn),
 # so plain print() calls can sit unflushed for minutes -- exactly what made
@@ -78,16 +77,7 @@ def home():
 @app.route('/health', methods=['GET'])
 def health():
     """Simple readiness probe."""
-    # pid/thread included temporarily to diagnose a readiness flip-flop on
-    # Render's free tier -- remove once that's understood.
-    return jsonify({
-        'status': 'ok',
-        'ready': READY,
-        'pid': os.getpid(),
-        'thread': threading.current_thread().name,
-        'embeddings_loaded': EMBEDDINGS_MODEL is not None,
-        'pinecone_loaded': PINE_CONE is not None,
-    }), 200
+    return jsonify({'status': 'ok', 'ready': READY}), 200
 
 @app.route('/api', methods=['POST'])
 @app.route('/api/chat', methods=['POST'])
@@ -341,26 +331,23 @@ def _warmup():
         print("[BOOT] Preload complete. System READY.")
     except Exception as e:
         print(f"[BOOT] Preload failed: {e}")
+        import traceback
+        traceback.print_exc()
 
-_WARMUP_STARTED = False
-
-def start_warmup():
-    """Kick off the preload in a background thread so first requests don't block.
-
-    This runs on import, not just under __main__, so WSGI servers (gunicorn on
-    Render/Heroku/Railway) warm up too. Without it those deployments would never
-    build the vector store and would serve the non-RAG fallback on every request.
-    """
-    global _WARMUP_STARTED
-    if _WARMUP_STARTED:
-        return
-    _WARMUP_STARTED = True
-    threading.Thread(target=_warmup, daemon=True).start()
-
-# Skip the preload under the Flask reloader's parent process, which would
-# otherwise load the model twice.
+# Run inline at import time -- not in a background thread. A background
+# thread was tried first (so first requests wouldn't block on it), but on
+# Render it consistently finished in an import context that request-handling
+# threads didn't share: the boot log showed "Preload complete. System READY"
+# and Pinecone connecting successfully, while /health and every request kept
+# reading EMBEDDINGS_MODEL/PINE_CONE/READY as still unset, permanently, from
+# the very same OS process. Diagnostic instrumentation confirmed it: same
+# pid throughout, but embeddings_loaded/pinecone_loaded stayed false forever
+# even minutes after the log line. Running synchronously removes the
+# ambiguity -- whichever import context ends up serving requests is the one
+# that gets warmed up, because there's only one. Costs ~10-15s at boot,
+# which Render's deploy timeout has plenty of room for.
 if os.getenv("ASKROCKY_SKIP_WARMUP") != "1":
-    start_warmup()
+    _warmup()
 
 if __name__ == '__main__':
     # Run Flask without the reloader to simplify logging and stability
