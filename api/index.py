@@ -78,7 +78,16 @@ def home():
 @app.route('/health', methods=['GET'])
 def health():
     """Simple readiness probe."""
-    return jsonify({'status': 'ok', 'ready': READY}), 200
+    # pid/thread included temporarily to diagnose a readiness flip-flop on
+    # Render's free tier -- remove once that's understood.
+    return jsonify({
+        'status': 'ok',
+        'ready': READY,
+        'pid': os.getpid(),
+        'thread': threading.current_thread().name,
+        'embeddings_loaded': EMBEDDINGS_MODEL is not None,
+        'pinecone_loaded': PINE_CONE is not None,
+    }), 200
 
 @app.route('/api', methods=['POST'])
 @app.route('/api/chat', methods=['POST'])
