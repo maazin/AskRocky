@@ -11,7 +11,7 @@ parent_dir = os.path.dirname(current_dir)
 sys.path.insert(0, os.path.join(parent_dir, 'flaskServer'))
 
 from config import Config
-from langchain.embeddings import HuggingFaceBgeEmbeddings
+from langchain.embeddings.base import Embeddings
 from langchain.vectorstores import Pinecone as LangchainPinecone
 from langchain.prompts import PromptTemplate
 # Compatible import for langchain==0.0.291
@@ -150,20 +150,37 @@ def chat():
         traceback.print_exc()
         return jsonify({'error': f'{str(e)}'}), 500
 
+class FastEmbedEmbeddings(Embeddings):
+    """
+    Runs BAAI/bge-small-en-v1.5 through fastembed (ONNX runtime) instead of
+    sentence-transformers (PyTorch). Same model weights, so vectors are
+    compatible with what's already indexed in Pinecone -- but the torch +
+    transformers stack this replaces was the actual cause of the OOM kills
+    on Render's free 512MB tier, so this is what makes the free tier viable.
+
+    Pinecone's index metric is cosine, which is scale-invariant, so a query
+    vector doesn't need to be normalized the same way the indexed vectors
+    were to retrieve correctly.
+    """
+
+    def __init__(self, model_name: str = "BAAI/bge-small-en-v1.5"):
+        from fastembed import TextEmbedding
+        self._model = TextEmbedding(model_name=model_name)
+
+    def embed_documents(self, texts):
+        return [vector.tolist() for vector in self._model.embed(texts)]
+
+    def embed_query(self, text):
+        return next(iter(self._model.embed([text]))).tolist()
+
+
 def embeddings():
-    """bge embeddings models from huggingface. Dimensions: 384"""
+    """BAAI/bge-small-en-v1.5 embeddings via fastembed. Dimensions: 384"""
     global EMBEDDINGS_MODEL
 
     if EMBEDDINGS_MODEL is None:
         print("Loading Embeddings Model...")
-        model_name = "BAAI/bge-small-en-v1.5"
-        model_kwargs = {'device': 'cpu'}
-        encode_kwargs = {'normalize_embeddings': True}
-        EMBEDDINGS_MODEL = HuggingFaceBgeEmbeddings(
-            model_name=model_name,
-            model_kwargs=model_kwargs,
-            encode_kwargs=encode_kwargs
-        )
+        EMBEDDINGS_MODEL = FastEmbedEmbeddings()
     return EMBEDDINGS_MODEL
 
 def pineconeInitialization(embeddings):
