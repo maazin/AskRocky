@@ -5,6 +5,12 @@ import sys
 import time
 import threading
 
+# stdout is fully block-buffered when it isn't a tty (true under gunicorn),
+# so plain print() calls can sit unflushed for minutes -- exactly what made
+# the fastembed startup hang below look silent while it was happening.
+# Line-buffer it so boot/debug logs show up as they're printed.
+sys.stdout.reconfigure(line_buffering=True)
+
 # Add parent directory to path
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
@@ -165,7 +171,16 @@ class FastEmbedEmbeddings(Embeddings):
 
     def __init__(self, model_name: str = "BAAI/bge-small-en-v1.5"):
         from fastembed import TextEmbedding
-        self._model = TextEmbedding(model_name=model_name)
+
+        # onnxruntime sizes its intra-op thread pool off the HOST's CPU count,
+        # not the cgroup quota a container is actually given. On Render's free
+        # tier (0.1 vCPU) that oversized pool gets starved by the throttle and
+        # session build can hang for a very long time instead of erroring.
+        # Pin it small; a model this size doesn't benefit from more threads
+        # anyway. Override with FASTEMBED_THREADS if a bigger instance
+        # warrants it.
+        threads = int(os.getenv("FASTEMBED_THREADS", "2"))
+        self._model = TextEmbedding(model_name=model_name, threads=threads)
 
     def embed_documents(self, texts):
         return [vector.tolist() for vector in self._model.embed(texts)]
